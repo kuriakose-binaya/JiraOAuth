@@ -16,7 +16,7 @@
 
     <script>
         const BASE_URL = "https://binayasam.atlassian.net/"; // Replace with your Jira instance base URL
-        const ACCESS_TOKEN = "ATOAIsjFWV2OyyeYPtuM0Ul1vBDg1VSVEmeTf0haWGjLWM-m3huwJHYx-Dsspdkj0HcuB1CC8C44"; // Replace with your OAuth 2.0 access token
+        const ACCESS_TOKEN = "https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=MDaXZuvm0O7qzlswbzQZtjftodOXnq72&scope=read%3Ajira-work%20manage%3Ajira-project%20manage%3Ajira-configuration%20read%3Ajira-user%20write%3Ajira-work%20manage%3Ajira-webhook%20manage%3Ajira-data-provider&redirect_uri=https%3A%2F%2Fkuriakose-binaya.github.io%2FJiraOAuth%2FJira.html&state=${YOUR_USER_BOUND_VALUE}&response_type=code&prompt=consent"; // Replace with your OAuth 2.0 access token
 
         document.getElementById('jiraForm').addEventListener('submit', async function(event) {
             event.preventDefault(); // Prevent form from refreshing the page
