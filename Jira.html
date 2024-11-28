@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jira Issue Details</title>
+</head>
+<body>
+    <h1>Get Jira Issue Details</h1>
+    <form id="jiraForm">
+        <label for="issueKey">Enter Jira Issue Key (e.g., PROJ-123):</label>
+        <input type="text" id="issueKey" name="issueKey" required>
+        <button type="submit">Get Issue Details</button>
+    </form>
+    <pre id="result"></pre>
+
+    <script>
+        const BASE_URL = "https://your-domain.atlassian.net"; // Replace with your Jira instance base URL
+        const ACCESS_TOKEN = "your-oauth2-access-token"; // Replace with your OAuth 2.0 access token
+
+        document.getElementById('jiraForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent form from refreshing the page
+
+            const issueKey = document.getElementById('issueKey').value;
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = "Loading...";
+
+            try {
+                const response = await fetch(`${BASE_URL}/rest/api/3/issue/${issueKey}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                resultElement.textContent = JSON.stringify(data, null, 4);
+            } catch (error) {
+                resultElement.textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
