@@ -16,7 +16,7 @@
     <pre id="result"></pre>
 
     <script>
-      const AUTH_URL = "https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=MDaXZuvm0O7qzlswbzQZtjftodOXnq72&scope=read%3Ajira-work%20manage%3Ajira-project%20manage%3Ajira-configuration%20read%3Ajira-user%20write%3Ajira-work%20manage%3Ajira-webhook%20manage%3Ajira-data-provider&redirect_uri=https%3A%2F%2Fkuriakose-binaya.github.io%2FJiraOAuth%2FJira.html&state=${YOUR_USER_BOUND_VALUE}&response_type=code&prompt=consent"; // Replace with your Jira OAuth 2.0 authorization URL
+        const AUTH_URL = "https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=MDaXZuvm0O7qzlswbzQZtjftodOXnq72&scope=read%3Ajira-work%20manage%3Ajira-project%20manage%3Ajira-configuration%20read%3Ajira-user%20write%3Ajira-work%20manage%3Ajira-webhook%20manage%3Ajira-data-provider&redirect_uri=https%3A%2F%2Fkuriakose-binaya.github.io%2FJiraOAuth%2FJira.html&state=${YOUR_USER_BOUND_VALUE}&response_type=code&prompt=consent"; // Replace with your Jira OAuth 2.0 authorization URL
         const CLIENT_ID = "MDaXZuvm0O7qzlswbzQZtjftodOXnq72"; // Replace with your Jira client ID
         const REDIRECT_URI = "https://kuriakose-binaya.github.io/JiraOAuth/Jira.html"; // Replace with your redirect URI
         const TOKEN_URL = "https://auth.atlassian.com/oauth/token"; // Jira token endpoint
@@ -26,7 +26,28 @@
 
         document.getElementById('login').addEventListener('click', () => {
             const authUrl = `${AUTH_URL}?audience=api.atlassian.com&client_id=${CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work&redirect_uri=${REDIRECT_URI}&response_type=code`;
-            window.location.href = authUrl;
+            const popup = window.open(authUrl, "Login with Jira", "width=500,height=600");
+
+            const interval = setInterval(() => {
+                try {
+                    if (popup.closed) {
+                        clearInterval(interval);
+                        console.error("Popup closed by user");
+                    }
+
+                    const redirectUri = new URL(popup.location);
+                    if (redirectUri.origin === new URL(REDIRECT_URI).origin) {
+                        const code = redirectUri.searchParams.get('code');
+                        if (code) {
+                            popup.close();
+                            clearInterval(interval);
+                            exchangeAuthorizationCodeForToken(code);
+                        }
+                    }
+                } catch (error) {
+                    // Catch cross-origin errors until the popup is redirected to the same origin
+                }
+            }, 500);
         });
 
         async function exchangeAuthorizationCodeForToken(code) {
@@ -55,16 +76,6 @@
             } catch (error) {
                 console.error(`Token exchange failed: ${error.message}`);
             }
-        }
-
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
-        const authorizationCode = getQueryParam('code');
-        if (authorizationCode) {
-            exchangeAuthorizationCodeForToken(authorizationCode);
         }
 
         document.getElementById('jiraForm').addEventListener('submit', async function(event) {
@@ -101,4 +112,5 @@
     </script>
 </body>
 </html>
+
 
