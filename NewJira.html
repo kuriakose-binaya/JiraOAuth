@@ -24,31 +24,31 @@
 
         let accessToken = null;
 
-        document.getElementById('login').addEventListener('click', () => {
-            const authUrl = `${AUTH_URL}?audience=api.atlassian.com&client_id=${CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work&redirect_uri=${REDIRECT_URI}&response_type=code`;
-            const popup = window.open(authUrl, "Login with Jira", "width=500,height=600");
+      document.getElementById('login').addEventListener('click', () => {
+    const authUrl = `${AUTH_URL}?audience=api.atlassian.com&client_id=${CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work&redirect_uri=${REDIRECT_URI}&response_type=code`;
+    const popup = window.open(authUrl, "Login with Jira", "width=500,height=600");
 
-            const interval = setInterval(() => {
-                try {
-                    if (popup.closed) {
-                        clearInterval(interval);
-                        console.error("Popup closed by user");
-                    }
+    const interval = setInterval(() => {
+        try {
+            if (popup.closed) {
+                clearInterval(interval);
+                console.error("Popup closed by user");
+            }
 
-                    const redirectUri = new URL(popup.location);
-                    if (redirectUri.origin === new URL(REDIRECT_URI).origin) {
-                        const code = redirectUri.searchParams.get('code');
-                        if (code) {
-                            popup.close();
-                            clearInterval(interval);
-                            exchangeAuthorizationCodeForToken(code);
-                        }
-                    }
-                } catch (error) {
-                    // Catch cross-origin errors until the popup is redirected to the same origin
+            // Check the popup location to see if it matches the expected redirect URI
+            if (popup.location && popup.location.href.includes(REDIRECT_URI)) {
+                const code = new URL(popup.location).searchParams.get('code');
+                if (code) {
+                    popup.close();
+                    clearInterval(interval);
+                    exchangeAuthorizationCodeForToken(code);
                 }
-            }, 500);
-        });
+            }
+        } catch (error) {
+            // Handle cross-origin errors and wait for the redirect
+        }
+    }, 500);
+});
 
         async function exchangeAuthorizationCodeForToken(code) {
             try {
