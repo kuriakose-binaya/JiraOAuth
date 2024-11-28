@@ -7,7 +7,8 @@
 </head>
 <body>
     <h1>Get Jira Issue Details</h1>
-    <form id="jiraForm">
+    <button id="login">Login with Jira</button>
+    <form id="jiraForm" style="display:none;">
         <label for="issueKey">Enter Jira Issue Key (e.g., PROJ-123):</label>
         <input type="text" id="issueKey" name="issueKey" required>
         <button type="submit">Get Issue Details</button>
@@ -15,11 +16,59 @@
     <pre id="result"></pre>
 
     <script>
+        const AUTH_URL = "https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=MDaXZuvm0O7qzlswbzQZtjftodOXnq72&scope=read%3Ajira-work%20manage%3Ajira-project%20manage%3Ajira-configuration%20read%3Ajira-user%20write%3Ajira-work%20manage%3Ajira-webhook%20manage%3Ajira-data-provider&redirect_uri=https%3A%2F%2Fkuriakose-binaya.github.io%2FJiraOAuth%2FJira.html&state=${YOUR_USER_BOUND_VALUE}&response_type=code&prompt=consent"; // Replace with your Jira OAuth 2.0 authorization URL
+        const CLIENT_ID = "MDaXZuvm0O7qzlswbzQZtjftodOXnq72"; // Replace with your Jira client ID
+        const REDIRECT_URI = "https://kuriakose-binaya.github.io/JiraOAuth/Jira.html"; // Replace with your redirect URI
+        const TOKEN_URL = "https://auth.atlassian.com/oauth/token"; // Jira token endpoint
         const BASE_URL = "https://binayasam.atlassian.net/"; // Replace with your Jira instance base URL
-        const ACCESS_TOKEN = "https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=MDaXZuvm0O7qzlswbzQZtjftodOXnq72&scope=read%3Ajira-work%20manage%3Ajira-project%20manage%3Ajira-configuration%20read%3Ajira-user%20write%3Ajira-work%20manage%3Ajira-webhook%20manage%3Ajira-data-provider&redirect_uri=https%3A%2F%2Fkuriakose-binaya.github.io%2FJiraOAuth%2FJira.html&state=${YOUR_USER_BOUND_VALUE}&response_type=code&prompt=consent"; // Replace with your OAuth 2.0 access token
+
+        let accessToken = null;
+
+        document.getElementById('login').addEventListener('click', () => {
+            const authUrl = `${AUTH_URL}?audience=api.atlassian.com&client_id=${CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work&redirect_uri=${REDIRECT_URI}&response_type=code`;
+            window.location.href = authUrl;
+        });
+
+        async function exchangeAuthorizationCodeForToken(code) {
+            try {
+                const response = await fetch(TOKEN_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        grant_type: 'authorization_code',
+                        client_id: CLIENT_ID,
+                        client_secret: '<client-secret>', // Replace with your Jira client secret
+                        code: code,
+                        redirect_uri: REDIRECT_URI
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                accessToken = data.access_token;
+                document.getElementById('jiraForm').style.display = 'block';
+            } catch (error) {
+                console.error(`Token exchange failed: ${error.message}`);
+            }
+        }
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const authorizationCode = getQueryParam('code');
+        if (authorizationCode) {
+            exchangeAuthorizationCodeForToken(authorizationCode);
+        }
 
         document.getElementById('jiraForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Prevent form from refreshing the page
+            event.preventDefault();
 
             const issueKey = document.getElementById('issueKey').value;
             const resultElement = document.getElementById('result');
@@ -29,7 +78,7 @@
                 const response = await fetch(`${BASE_URL}/rest/api/3/issue/${issueKey}`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                        'Authorization': `Bearer ${accessToken}`,
                         'Accept': 'application/json'
                     }
                 });
